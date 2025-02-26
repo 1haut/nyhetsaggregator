@@ -16,9 +16,9 @@ async function emneValg() {
   return stikkord
 }
 
-function scrapeVgForside() {
+async function scrapeVgForside() {
     try {
-        const $ = cheerio.load("https://www.vg.no");
+        const $ = await cheerio.load("https://www.vg.no");
         const data = [];
         $("article:not([hidden]) .titles").each((index, element) => {
             let overskrift = $(element).text();
@@ -32,9 +32,9 @@ function scrapeVgForside() {
     }
 }
 
-function scrapeNrkForside() {
+async function scrapeNrkForside() {
     try {
-        const $ = cheerio.load("https://www.nrk.no");
+        const $ = await cheerio.load("https://www.nrk.no");
         const data = [];
         $('kur-room__title').each((index, element) => {
             let overskrift = $(element).text().trim("");
