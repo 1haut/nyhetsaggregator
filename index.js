@@ -33,16 +33,16 @@ async function hentNyheterVg() {
 				const nyheter = [];
 
         $("article:not([hidden])").each((index, element) => {
-            let overskrift = $(element).find('.titles').text();
-            let url = $(element).find('a').attr('href');
-            overskrift = overskrift.replace(/\s*\n\s*/g, ' ').trim("");
-            if (url && !(url.startsWith("https://tv.vg.no"))) {
-							nyheter.push({
-										nyhetsside: 'VG',
-										tittel: overskrift,
-										lenke: url
-										})};
-								});
+					const overskrift = $(element).find('.titles').text();
+					const url = $(element).find('a').attr('href');
+					overskrift = overskrift.replace(/\s*\n\s*/g, ' ').trim("");
+					if (url && !(url.startsWith("https://tv.vg.no"))) {
+						nyheter.push({
+								nyhetsside: 'VG',
+								tittel: overskrift,
+								lenke: url
+								})};
+							});
 
 				return nyheter		
     } catch(err) {
@@ -82,7 +82,7 @@ async function hentNyheterAftenposten() {
 					const overskrift = $(element).find('.title').text();
 					const url = $(element).attr('href');
 					saker.push({
-						avis: 'Aftenposten',
+						nyhetsside: 'Aftenposten',
 						tittel: overskrift,
 						lenke: url
 					});
@@ -97,12 +97,16 @@ async function hentNyheterAftenposten() {
 
 
 
-function main() {
-	const nyheterVg = hentNyheterVg();
-	const nyheterNrk = hentNyheterNrk();
-	const nyheterAftenposten = hentNyheterAftenposten();
+async function main() {
+	const nyheterVg = await hentNyheterVg();
+	const nyheterNrk = await hentNyheterNrk();
+	const nyheterAftenposten = await hentNyheterAftenposten();
 
+	const dagensOverskrifter = nyheterVg.concat(nyheterNrk).concat(nyheterAftenposten);
 
-}
+	for (let nyhet of dagensOverskrifter) {
+		console.log(`(${nyhet['nyhetsside']}) ${nyhet['tittel']} \n ${nyhet['lenke']}`)
+	};
+};
 
 main();
