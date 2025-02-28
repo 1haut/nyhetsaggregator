@@ -10,21 +10,21 @@ async function emneValg() {
   });
   
   const brukerSvar = await rl.question('Hvilke emner har du lyst til å lese om? ');
-  const stikkord = brukerSvar.split(",")
+  const stikkord = brukerSvar.split(",").map((emne) => emne.trim());
   rl.close()
   
   return stikkord
 };
 
-function brukerInput() {
-	const emner = emneValg();
+// function brukerInput() {
+// 	const emner = emneValg();
 
-  console.log("Du har valgt å lese om: ")
-  emner.forEach(emne => {
-      emne = emne.trim()
-      console.log(emne)
-  });
-};
+//   console.log("Du har valgt å lese om: ")
+//   emner.forEach(emne => {
+//       emne = emne.trim()
+//       console.log(emne)
+//   });
+// };
 
 async function hentNyheterVg() {
     try {
@@ -63,10 +63,10 @@ async function hentNyheterNrk() {
 						nyhetsside: "NRK",
 						tittel: overskrift,
 						lenke: url
-					})
-			});
+							});
+					});
 
-			return nyheter
+				return nyheter
 		} catch (err) {
 				console.error("Feil ved henting av data: ", err);
 		}
@@ -94,13 +94,11 @@ async function hentNyheterAftenposten() {
 		}
 };
 
-
-
-
 async function main() {
 	const nyheterVg = await hentNyheterVg();
 	const nyheterNrk = await hentNyheterNrk();
 	const nyheterAftenposten = await hentNyheterAftenposten();
+
 
 	const dagensOverskrifter = nyheterVg.concat(nyheterNrk).concat(nyheterAftenposten);
 
