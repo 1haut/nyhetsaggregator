@@ -99,7 +99,6 @@ async function main() {
 	const nyheterNrk = await hentNyheterNrk();
 	const nyheterAftenposten = await hentNyheterAftenposten();
 
-
 	const dagensOverskrifter = nyheterVg.concat(nyheterNrk).concat(nyheterAftenposten);
 
 	for (let nyhet of dagensOverskrifter) {
