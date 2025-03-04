@@ -27,72 +27,118 @@ async function emneValg() {
 // };
 
 async function hentNyheterVg() {
-    try {
-				const html = await axios.get("https://www.vg.no")
-        const $ =  cheerio.load(html);
-				const nyheter = [];
+	try {
+		const html = await axios.get("https://www.vg.no")
+		const $ =  cheerio.load(html);
+		const nyheter = [];
 
-        $("article:not([hidden])").each((index, element) => {
-					const overskrift = $(element).find('.titles').text();
-					const url = $(element).find('a').attr('href');
-					overskrift = overskrift.replace(/\s*\n\s*/g, ' ').trim("");
-					if (url && !(url.startsWith("https://tv.vg.no"))) {
-						nyheter.push({
-								nyhetsside: 'VG',
-								tittel: overskrift,
-								lenke: url
-								})};
-							});
+		$("article:not([hidden])").each((index, element) => {
+			const overskrift = $(element).find('.titles').text();
+			const url = $(element).find('a').attr('href');
+			overskrift = overskrift.replace(/\s*\n\s*/g, ' ').trim("");
+			if (url && !(url.startsWith("https://www.vg.no"))) {
+				nyheter.push({
+						nyhetsside: 'VG',
+						tittel: overskrift,
+						lenke: url
+						})};
+					});
 
-				return nyheter		
+		return nyheter		
     } catch(err) {
         console.error("Feil ved henting av data: ", err);
     }
 };
 
 async function hentNyheterNrk() {
-		try {
-				const html = await axios.get("https://www.nrk.no");
-				const $ = cheerio.load(html);
-				const nyheter = [];
+	try {
+		const html = await axios.get("https://www.nrk.no");
+		const $ = cheerio.load(html);
+		const nyheter = [];
 
-				$('.kur-room:not([data-ec-id="https://radio.nrk.no/"])').each((index, element) => {
-					const url = $(element).find('a').attr('href');
-					const overskrift = $(element).find('.kur-room__title').text().trim("");
-					nyheter.push({
-						nyhetsside: "NRK",
-						tittel: overskrift,
-						lenke: url
-							});
+		$('.kur-room:not([data-ec-id="https://radio.nrk.no/"])').each((index, element) => {
+			const url = $(element).find('a').attr('href');
+			const overskrift = $(element).find('.kur-room__title').text().trim("");
+			nyheter.push({
+				nyhetsside: "NRK",
+				tittel: overskrift,
+				lenke: url
 					});
+			});
 
-				return nyheter
-		} catch (err) {
-				console.error("Feil ved henting av data: ", err);
-		}
+		return nyheter
+	} catch (err) {
+			console.error("Feil ved henting av data: ", err);
+	}
 };
 
 async function hentNyheterAftenposten() {
+	try {
+		const html = await axios.get("https://www.aftenposten.no/");
+		const $ = cheerio.load(html);
+		const nyheter = [];
+
+		$('.content-main-wrapper article a').each((index, element) => {
+			const overskrift = $(element).find('.title').text();
+			const url = $(element).attr('href');
+			if (url && url.startsWith("https://www.aftenposten.no/"))
+			saker.push({
+				nyhetsside: 'Aftenposten',
+				tittel: overskrift,
+				lenke: url
+			});
+		});
+
+		return nyheter
+	} catch (err) {
+			console.error("Feil ved henting av data: ", err);
+	}
+};
+
+async function scrapeVgArtikkel(nettlenke) {
 		try {
-				const html = await axios.get("https://www.aftenposten.no/");
-				const $ = cheerio.load(html);
-				const nyheter = [];
+			const html = await axios.get(nettlenke)
+			const $ = cheerio.load(html);
 
-				$('.content-main-wrapper article a').each((index, element) => {
-					const overskrift = $(element).find('.title').text();
-					const url = $(element).attr('href');
-					saker.push({
-						nyhetsside: 'Aftenposten',
-						tittel: overskrift,
-						lenke: url
-					});
-				});
-
-				return nyheter
+			const tekst = [];
+			const artikkelside = $('h1, .article-body > p, .article-body > h2');
+			$(artikkelside).find('span[aria-hidden="true"]').text("");
+			artikkelside.each((index, element) => {
+					const paragraf = $(element).text();
+					tekst.push(paragraf);
+			});
+			
+			return tekst.join(" ")
 		} catch (err) {
-				console.error("Feil ved henting av data: ", err);
+				console.error(err);
 		}
 };
+
+function skrapNrkArtikkel(artikkel) {
+		try {
+				const $ = cheerio.load(artikkel);
+				const nyhetsmelding = $('article').attr('data-ec-name');
+				if (nyhetsmelding) {
+						const tekst = $('.bulletin-title, .bulletin-text-body').text();
+						return tekst
+				} else {
+						const topptekst = $('article header');
+
+						const total = [];
+						const artikkelelement = $("div[data-ec-name='brødtekst']").children('h2, p')
+						$(artikkelelement).find('span[aria-hidden="true"]').text("");
+						artikkelelement.each((index, element) => {
+								const avsnitt = $(element).text();
+								total.push(avsnitt);
+						})
+
+						return topptekst + total.join(" ")
+				}
+		} catch (err) {
+				console.error(err);
+		}
+}
+
 
 async function main() {
 	const nyheterVg = await hentNyheterVg();
