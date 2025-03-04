@@ -95,7 +95,7 @@ async function hentNyheterAftenposten() {
 	}
 };
 
-async function scrapeVgArtikkel(nettlenke) {
+async function skrapVgArtikkel(nettlenke) {
 		try {
 			const html = await axios.get(nettlenke)
 			const $ = cheerio.load(html);
@@ -114,29 +114,46 @@ async function scrapeVgArtikkel(nettlenke) {
 		}
 };
 
-function skrapNrkArtikkel(artikkel) {
+async function skrapNrkArtikkel(artikkel) {
 		try {
-				const $ = cheerio.load(artikkel);
-				const nyhetsmelding = $('article').attr('data-ec-name');
-				if (nyhetsmelding) {
-						const tekst = $('.bulletin-title, .bulletin-text-body').text();
-						return tekst
-				} else {
-						const topptekst = $('article header');
+			const html = await axios.get(nettlenke)
+			const $ = cheerio.load(html);
+			const finnesNyhetsmelding = $('article').attr('data-ec-name');
+			if (finnesNyhetsmelding) {
+				const tekst = $('.bulletin-title, .bulletin-text-body').text();
+				return tekst
+			} else {
+				const topptekst = $('article header');
 
-						const total = [];
-						const artikkelelement = $("div[data-ec-name='brødtekst']").children('h2, p')
-						$(artikkelelement).find('span[aria-hidden="true"]').text("");
-						artikkelelement.each((index, element) => {
-								const avsnitt = $(element).text();
-								total.push(avsnitt);
-						})
+				const total = [];
+				const artikkelelement = $("div[data-ec-name='brødtekst']").children('h2, p')
+				$(artikkelelement).find('span[aria-hidden="true"]').text("");
+				artikkelelement.each((index, element) => {
+						const avsnitt = $(element).text();
+						total.push(avsnitt);
+				})
 
-						return topptekst + total.join(" ")
-				}
+				return topptekst + total.join(" ")
+			}
 		} catch (err) {
 				console.error(err);
 		}
+}
+
+async function skrapAftenpostenArtikkel(artikkel) {
+	try {
+		const html = await axios.get(nettlenke)
+		const $ = cheerio.load(html);
+		
+		const total = [];
+
+		$('article').children("h1, h2, p, ul").each((index, element) => {
+			const avsnitt = $(element).text();
+			total.push(avsnitt);
+		});
+	} catch (err) {
+		console.error(err);
+	}
 }
 
 
