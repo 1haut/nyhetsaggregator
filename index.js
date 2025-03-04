@@ -144,7 +144,7 @@ async function skrapAftenpostenArtikkel(artikkel) {
 	try {
 		const html = await axios.get(nettlenke)
 		const $ = cheerio.load(html);
-		
+
 		const total = [];
 
 		$('article').children("h1, h2, p, ul").each((index, element) => {
@@ -170,3 +170,4 @@ async function main() {
 };
 
 main();
+
