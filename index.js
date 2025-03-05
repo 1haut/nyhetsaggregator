@@ -36,13 +36,13 @@ async function hentNyheterVg() {
 			const overskrift = $(element).find('.titles').text();
 			const url = $(element).find('a').attr('href');
 			overskrift = overskrift.replace(/\s*\n\s*/g, ' ').trim("");
-			if (url && !(url.startsWith("https://www.vg.no"))) {
+			if (url && url.startsWith("https://www.vg.no")) {
 				nyheter.push({
-						nyhetsside: 'VG',
-						tittel: overskrift,
-						lenke: url
-						})};
-					});
+					nyhetsside: 'VG',
+					tittel: overskrift,
+					lenke: url
+					})};
+				});
 
 		return nyheter		
     } catch(err) {
@@ -114,7 +114,7 @@ async function skrapVgArtikkel(nettlenke) {
 		}
 };
 
-async function skrapNrkArtikkel(artikkel) {
+async function skrapNrkArtikkel(nettlenke) {
 		try {
 			const html = await axios.get(nettlenke)
 			const $ = cheerio.load(html);
@@ -129,8 +129,8 @@ async function skrapNrkArtikkel(artikkel) {
 				const artikkelelement = $("div[data-ec-name='brødtekst']").children('h2, p')
 				$(artikkelelement).find('span[aria-hidden="true"]').text("");
 				artikkelelement.each((index, element) => {
-						const avsnitt = $(element).text();
-						total.push(avsnitt);
+					const avsnitt = $(element).text();
+					total.push(avsnitt);
 				})
 
 				return topptekst + total.join(" ")
@@ -140,7 +140,7 @@ async function skrapNrkArtikkel(artikkel) {
 		}
 }
 
-async function skrapAftenpostenArtikkel(artikkel) {
+async function skrapAftenpostenArtikkel(nettlenke) {
 	try {
 		const html = await axios.get(nettlenke)
 		const $ = cheerio.load(html);
