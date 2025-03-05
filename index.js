@@ -82,7 +82,7 @@ async function hentNyheterAftenposten() {
 			const overskrift = $(element).find('.title').text();
 			const url = $(element).attr('href');
 			if (url && url.startsWith("https://www.aftenposten.no/"))
-			saker.push({
+			nyheter.push({
 				nyhetsside: 'Aftenposten',
 				tittel: overskrift,
 				lenke: url
