@@ -181,7 +181,9 @@ async function skrapAftenpostenArtikkel(nettlenke) {
 			total.push(avsnitt);
 		});
 
-		return total.join(" ")
+		const tekst = total.join(" ");
+
+		return tekst
 	} catch (err) {
 		console.error(err);
 	}
@@ -228,6 +230,7 @@ async function main() {
 	const nyheterAftenposten = await hentNyheterAftenposten();
 
 	const dagensOverskrifter = nyheterVg.concat(nyheterNrk).concat(nyheterAftenposten);
+	console.log("Dagens overskrifter.")
 
 	for (let nyhet of dagensOverskrifter) {
 		nyhet.tekst = await hentTekst(nyhet.lenke);
