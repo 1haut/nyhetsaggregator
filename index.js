@@ -2,11 +2,16 @@ import axios from "axios";
 import * as cheerio from 'cheerio';
 import puppeteer from "puppeteer";
 import readline from 'node:readline/promises';
+import natural from 'natural';
+import * as sw from 'stopword';
 
 // Hjemmesider
 const vgHjemmeside = "https://www.vg.no";
 const nrkHjemmeside = "https://www.nrk.no";
 const aftenpostenHjemmeside = "https://www.aftenposten.no";
+
+// Stoppordliste
+const stoppord = sw.nob;
 
 // Spør brukeren om emner den har lyst til å lese om
 async function emneValg() {
@@ -220,6 +225,42 @@ function stikkord(emner, fullTekst) {
     }
 
     return stikkordmatch
+}
+
+function fjernStoppord(tekst) {
+	const tokenizer = new natural.AggressiveTokenizerNo();
+	const ordliste = tokenizer.tokenize(tekst);
+
+	const filtrerteOrd = sw.removeStopwords(ordliste, stoppord)
+
+	return filtrerteOrd.join(" ")
+}
+
+function nokkelord(tekst) {
+    if (!Array.isArray(tekst)) {
+        tekst = fjernStoppord(tekst)
+    }
+
+    const antallOrd = 5
+
+    const ordteller = {}
+
+    for (let ord of tekst) {
+        if (ord in ordteller) {
+            ordteller[ord] += 1
+        } else {
+            ordteller[ord] = 1
+        }
+    }
+
+    // Ord sortert i synkende rekkefølge
+    const listeAvListe = Object.entries(ordteller).sort((a, b) => b[1] - a[1])
+
+    const mestBrukt = listeAvListe.slice(0, antallOrd)
+
+    const ordliste = mestBrukt.map((ordpar) => {return ordpar[0]})
+
+	return ordliste
 }
 
 async function main() {
