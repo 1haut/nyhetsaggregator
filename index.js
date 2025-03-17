@@ -10,7 +10,7 @@ const vgHjemmeside = "https://www.vg.no";
 const nrkHjemmeside = "https://www.nrk.no";
 const aftenpostenHjemmeside = "https://www.aftenposten.no";
 
-// Stoppordliste
+// Stoppordliste norsk bokmål
 const stoppord = sw.nob;
 
 // Spør brukeren om emner den har lyst til å lese om
@@ -229,11 +229,11 @@ function stikkord(emner, fullTekst) {
 
 function fjernStoppord(tekst) {
 	const tokenizer = new natural.AggressiveTokenizerNo();
-	const ordliste = tokenizer.tokenize(tekst);
+	const ordliste = tokenizer.tokenize(tekst.toLowerCase());
 
 	const filtrerteOrd = sw.removeStopwords(ordliste, stoppord)
 
-	return filtrerteOrd.join(" ")
+	return filtrerteOrd
 }
 
 function nokkelord(tekst) {
@@ -258,9 +258,9 @@ function nokkelord(tekst) {
 
     const mestBrukt = listeAvListe.slice(0, antallOrd)
 
-    const ordliste = mestBrukt.map((ordpar) => {return ordpar[0]})
+    const mestBruktOrdliste = mestBrukt.map((ordpar) => {return ordpar[0]})
 
-	return ordliste
+	return mestBruktOrdliste
 }
 
 async function main() {
