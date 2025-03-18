@@ -11,24 +11,24 @@ const vgHjemmeside = "https://www.vg.no";
 const nrkHjemmeside = "https://www.nrk.no";
 const aftenpostenHjemmeside = "https://www.aftenposten.no";
 
-// Stoppordliste norsk bokmål
+// Stoppordlister
 const stoppord = sw.nob;
 const stoppordNynorsk = nno;
 
 // Spør brukeren om emner den har lyst til å lese om
 async function emneValg() {
 	// Modul som tillater brukerinteraksjon
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  
-  const brukerSvar = await rl.question('Hvilke emner har du lyst til å lese om? Separer emnene med komma');
+	const rl = readline.createInterface({
+	input: process.stdin,
+	output: process.stdout,
+	});
+
+	const brukerSvar = await rl.question('Hvilke emner har du lyst til å lese om? Separer emnene med komma');
 	// Setter valgte emner i listeform(array)
-  const stikkord = brukerSvar.split(",").map((emne) => emne.trim());
-  rl.close();
-  
-  return stikkord
+	const stikkord = brukerSvar.split(",").map((emne) => emne.trim());
+	rl.close();
+
+	return stikkord
 };
 
 
@@ -66,7 +66,7 @@ async function hentNyheterNrk() {
 		const $ = await nettsideHTML(nrkHjemmeside);
 		const nyheter = [];
 		
-		// Henter url, overskrift
+		// Henter url
 		$('.kur-room:not([data-ec-id="https://radio.nrk.no/"])').each((index, element) => {
 			const url = $(element).find('a').attr('href');
 			nyheter.push(url);
@@ -303,17 +303,17 @@ function nokkelord(tekst) {
 	}
 
 	// Ord sortert i synkende rekkefølge
-	const listeAvListe = Object.entries(ordteller).sort((a, b) => b[1] - a[1])
+	const listeAvListe = Object.entries(ordteller).sort((a, b) => b[1] - a[1]);
 
-	const mestBrukt = listeAvListe.slice(0, antallOrd)
+	const mestBrukt = listeAvListe.slice(0, antallOrd);
 
-	const mestBruktOrdliste = mestBrukt.map((ordpar) => {return ordpar[0]})
+	const mestBruktOrdliste = mestBrukt.map((ordpar) => {return ordpar[0]});
 
 	return mestBruktOrdliste
 }
 
 async function main() {
-	const stikkordliste = emneValg();
+	const brukerEmner = emneValg();
 
 	const nyheterVg = await hentNyheterVg();
 	const nyheterNrk = await hentNyheterNrk();
@@ -325,17 +325,17 @@ async function main() {
 
 	for (let url of urlListe) {
 		const artikkel = await hentInfo(url);
+
+		const matchendeStikkord = stikkord(brukerEmner, artikkel.tekst);
+
+		if (matchendeStikkord.length > 0) {
+			relevantNytt.push({
+				url: url,
+				overskrift: artikkel.overskrift,
+				stikkord: matchendeStikkord
+			})
+		}
 	}
-
-	// for (let nyhet of dagensOverskrifter) {
-	// 	nyhet.tekst = await hentTekst(nyhet.lenke);
-		
-	// 	const matchendeStikkord = stikkord(stikkordliste, nyhet.tekst);
-
-	// 	if (matchendeStikkord.length > 0) {
-	// 		console.log(nyhet.lenke);
-	// 	}
-	// };
 };
 
 main();
