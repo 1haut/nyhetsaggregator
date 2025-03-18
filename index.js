@@ -4,14 +4,16 @@ import puppeteer from "puppeteer";
 import readline from 'node:readline/promises';
 import natural from 'natural';
 import * as sw from 'stopword';
+import { nno } from './ekstra/stoppordNynorsk.js'
 
 // Hjemmesider
 const vgHjemmeside = "https://www.vg.no";
 const nrkHjemmeside = "https://www.nrk.no";
 const aftenpostenHjemmeside = "https://www.aftenposten.no";
 
-// Stoppordliste norsk bokmål
+// Stoppordlister
 const stoppord = sw.nob;
+const stoppordNynorsk = nno;
 
 // Spør brukeren om emner den har lyst til å lese om
 async function emneValg() {

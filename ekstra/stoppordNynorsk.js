@@ -1,0 +1,33 @@
+const nno = [
+'og',     'i',     'eg',     'det',    'at',      'ein',
+'eit',    'den',   'til',    'er',     'som',     'på',
+'dei',    'med',   'han',    'av',     'ikkje',   'der',
+'så',     'var',   'meg',    'seg',    'men',     'eitt',
+'har',    'om',    'vi',     'min',    'mitt',    'ha',
+'hadde',  'ho',    'no',     'over',   'då',      'ved',
+'frå',    'du',    'ut',     'sin',    'oss',     'opp',
+'kan',    'hans',  'kvar',   'eller',  'kva',     'skal',
+'sjølv',  'her',   'alle',   'vil',    'bli',     'blei',
+'vorte',  'kunne', 'inn',    'når',    'kom',     'nokre',
+'noko',   'ville', 'de',     'dykkar', 'berre',   'ja',
+'etter',  'ned',   'skulle', 'denne',  'for',     'deg',
+'sei',    'sine',  'sitt',   'mot',    'å',       'mykje',
+'kvifor', 'dette', 'desse',  'utan',   'korleis', 'ingen',
+'din',    'ditt',  'blir',   'same',   'sånn',    'inni',
+'mellom', 'vår',   'kven',   'viss',   'både',    'enn',
+'fordi',  'før',   'mange',  'òg',
+'slik',      'vore',   'vera',
+'båe',       'sidan',  'henne',
+'hennar',    'deim',   'deira',
+'deira',     'deiras', 'dykk',
+'hjå',       'hoe',    'honom',
+'hoss',      'hossen', 'inkje',
+'kvarhelst', 'kvi',    'me',
+'korso',     'medan',  'mi',
+'nokor',     'sia',    'sjøl',
+'so',        'somme',  'somt',
+'varte',     'vere',   'verte',
+'vors',      'vort'
+  ]
+
+export { nno }
