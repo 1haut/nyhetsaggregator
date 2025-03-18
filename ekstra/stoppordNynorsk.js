@@ -28,6 +28,6 @@ const nno = [
 'so',        'somme',  'somt',
 'varte',     'vere',   'verte',
 'vors',      'vort'
-  ]
+]
 
 export { nno }

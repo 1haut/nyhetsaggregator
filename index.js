@@ -11,7 +11,7 @@ const vgHjemmeside = "https://www.vg.no";
 const nrkHjemmeside = "https://www.nrk.no";
 const aftenpostenHjemmeside = "https://www.aftenposten.no";
 
-// Stoppordlister
+// Stoppordliste norsk bokmål
 const stoppord = sw.nob;
 const stoppordNynorsk = nno;
 
@@ -47,21 +47,13 @@ async function hentNyheterVg() {
 	try {
 		const $ = await nettsideHTML(vgHjemmeside);
 		const nyheter = [];
-		// Henter url, overskrift, og indikerer om artiklen har en betalingsmur
+		// Henter url
 		$("article:not([hidden])").each((index, element) => {
-			const overskrift = $(element).find('.titles').text();
 			const url = $(element).find('a').attr('href');
-
-			overskrift = overskrift.replace(/\s*\n\s*/g, ' ').trim(""); // Formatering av overskrift
-			const betalingsmur = $(element).attr('data-paywall');
 			if (url && url.startsWith(vgHjemmeside)) {
-				nyheter.push({
-					nyhetsside: 'VG',
-					tittel: overskrift,
-					lenke: url,
-					betalingsmur: betalingsmur
-					})};
-				});
+				nyheter.push(url)};
+				}
+            );
 
 		return nyheter		
     } catch(err) {
@@ -77,13 +69,7 @@ async function hentNyheterNrk() {
 		// Henter url, overskrift
 		$('.kur-room:not([data-ec-id="https://radio.nrk.no/"])').each((index, element) => {
 			const url = $(element).find('a').attr('href');
-			const overskrift = $(element).find('.kur-room__title').text().trim("");
-			nyheter.push({
-				nyhetsside: "NRK",
-				tittel: overskrift,
-				lenke: url,
-				betalingsmur: false
-				});
+			nyheter.push(url);
 			});
 
 		return nyheter
@@ -97,23 +83,11 @@ async function hentNyheterAftenposten() {
 		const $ = await nettsideHTML(aftenpostenHjemmeside);
 		const nyheter = [];
 
-		// Henter url, overskrift, og indikerer om artiklen har en betalingsmur
+		// Henter url
 		$('.content-main-wrapper article').each((index, element) => {
-			// Henting av overskrift og url v/ hjelp av attributt vs. nettsidestruktur
-			const overskrift = $(element).attr('data-pulse-teaser-title') || $(element).find('h2').text();
 			const url = $(element).attr('data-pulse-url') || $(element).find('a').attr('href');
-
-			// Attributt som signaliserer tilgang til artikkel
-			const betalingsmurAttributt = $(element).attr('data-pulse-access-level');
-			const betalingsmur = (betalingsmurAttributt === "Paid"); // 
-
 			if (url && url.startsWith(aftenpostenHjemmeside)){
-				nyheter.push({
-					nyhetsside: 'Aftenposten',
-					tittel: overskrift,
-					lenke: url,
-					betalingsmur: betalingsmur
-				});
+				nyheter.push(url);
 			}		
 		});
 
@@ -127,8 +101,28 @@ async function skrapVgArtikkel(nettlenke) {
 	try {
 		const $ = await nettsideHTML(nettlenke);
 
-		const tekststykker = [];
+		const informasjon = $.extract({
+            nyhetsside: {
+                selector: 'meta[property="og:site_name"]',
+                value: 'content'
+            },
+            url: {
+                selector: 'link[rel="canonical"]',
+                value: 'href'
+            },
+            overskrift: 'h1',
+            tidspunkt: {
+                selector: 'meta[property="article:published_time"]',
+                value: 'content'
+            },
+            journalist: ['#vg-byline a'],
+            emner: [{
+                selector: 'meta[property="article:tag"]',
+                value: 'content'
+            }]
+        })
 
+		const tekststykker = [];
 		// Elementer som inneholder overskrifter (h1), avsnitt (p) og underoverskrifter (h2)
 		const artikkelside = $('h1, .article-body > p, .article-body > h2');
 		
@@ -138,9 +132,9 @@ async function skrapVgArtikkel(nettlenke) {
 			tekststykker.push(ansnitt);
 		});
 
-		const tekst = tekststykker.join(" ")
+		informasjon.tekst = tekststykker.join(" ");
 		
-		return tekst
+		return informasjon
 	} catch (err) {
 		console.error(err);
 	}
@@ -150,66 +144,119 @@ async function skrapNrkArtikkel(nettlenke) {
 	try {
 		const $ = await nettsideHTML(nettlenke);
 
-		// Skille mellom nyhetsmeldinger og artikler
-		const finnesNyhetsmelding = $('article').attr('data-ec-name');
-		if (finnesNyhetsmelding) {
-			const tekst = $('.bulletin-title, .bulletin-text-body').text();
+		const informasjon = $.extract({
+            nyhetsside: {
+                selector: 'meta[property="og:site_name"]',
+                value: 'content'
+            },
+            url: {
+                selector: 'meta[property="og:url"]',
+                value: 'content'
+            },
+            overskrift: 'h2.bulletin-title',
+            tidspunkt: {
+                selector: 'meta[property="article:published_time"]',
+                value: 'content'
+            },
+            journalist: {
+                selector: 'meta[name="author"]',
+                value: 'content'
+            }
+        })
 
-			return tekst
-		} else {
-			const topptekst = $('article header');
+        informasjon.betalingsmur = false;
 
-			const total = [];
-			const artikkelelement = $("div[data-ec-name='brødtekst']").children('h2, p')
-			$(artikkelelement).find('span[aria-hidden="true"]').text("");
+        informasjon.tekst = hentTekstNrk($);
 
-			artikkelelement.each((index, element) => {
-				const avsnitt = $(element).text();
-				total.push(avsnitt);
-			})
-
-			const tekst = topptekst + total.join(" ") 
-
-			return tekst
-		}
+		return informasjon
 	} catch (err) {
 		console.error(err);
 	}
 }
 
+function hentTekstNrk($) {
+    // Skille mellom nyhetsmeldinger og artikler
+    const finnesNyhetsmelding = $('article').attr('data-ec-name');
+    if (finnesNyhetsmelding) {
+        const tekst = $('.bulletin-title, .bulletin-text-body').text();
+
+        return tekst
+    } else {
+        const topptekst = $('article header');
+
+        const total = [];
+        const artikkelelement = $("div[data-ec-name='brødtekst']").children('h2, p')
+        $(artikkelelement).find('span[aria-hidden="true"]').text("");
+
+        artikkelelement.each((index, element) => {
+            const avsnitt = $(element).text();
+            total.push(avsnitt);
+        })
+
+        const tekst = topptekst + total.join(" ") 
+
+        return tekst
+        }
+    }
+
 async function skrapAftenpostenArtikkel(nettlenke) {
 	try {
 		const $ = await nettsideHTML(nettlenke);
 
-		const total = [];
+		const informasjon = $.extract({
+            nyhetsside: {
+                selector: 'meta[name="application-name"]',
+                value: 'content'
+            },
+            url: {
+                selector: 'meta[property="og:url"]',
+                value: 'content'
+            },
+            overskrift: 'h1',
+            tidspunkt: {
+                selector: 'meta[property="article:published_time"]',
+                value: 'content'
+            },
+            journalist: ['article span.byline-name'],
+        });
+
+        informasjon.betalingsmur = Boolean($('.paywall').text().trim(""));
+
+        // Hent ut tekst
+        const total = [];
 
 		$('article').children("h1, h2, p, ul").each((index, element) => {
 			const avsnitt = $(element).text();
 			total.push(avsnitt);
 		});
 
-		const tekst = total.join(" ");
+		informasjon.tekst = total.join(" ");
 
-		return tekst
+        return informasjon;
 	} catch (err) {
 		console.error(err);
 	}
 }
 
-async function hentTekst(url) {
+async function hentInfo(url) {
 	try {
-		const urlprefiks = "https://";
+		const urlprefiks = "https://www.";
 
-		let artikkeltekst;
-		if (url.startsWith(urlprefiks + "nrk.no")) {
-			artikkeltekst = await skrapNrkArtikkel(url)
-		} else if (url.startsWith(urlprefiks + "vg.no")){
-			artikkeltekst = await skrapVgArtikkel(url);
-		} else if (url.startsWith(urlprefiks + "aftenposten.no")) {
-			artikkeltekst = await skrapAftenpostenArtikkel(url);
+		let informasjon;
+
+		switch (true) {
+			case url.startsWith(urlprefiks +  + "nrk.no"):
+				informasjon = await skrapNrkArtikkel(url)
+				break;
+			case url.startsWith(urlprefiks + "vg.no"):
+				informasjon = await skrapVgArtikkel(url)
+				break;
+			case url.startsWith(urlprefiks + "aftenposten.no"):
+				informasjon = await skrapAftenpostenArtikkel(url)
+				break;
 		}
 
-		return artikkeltekst
+		return informasjon
 	} catch (err) {
 		console.log(`Url som feilet: ${url}`);
 		console.error(err);
@@ -239,28 +286,28 @@ function fjernStoppord(tekst) {
 }
 
 function nokkelord(tekst) {
-    if (!Array.isArray(tekst)) {
-        tekst = fjernStoppord(tekst)
-    }
+	if (!Array.isArray(tekst)) {
+		tekst = fjernStoppord(tekst)
+	}
 
-    const antallOrd = 5
+	const antallOrd = 5
 
-    const ordteller = {}
+	const ordteller = {}
 
-    for (let ord of tekst) {
-        if (ord in ordteller) {
-            ordteller[ord] += 1
-        } else {
-            ordteller[ord] = 1
-        }
-    }
+	for (let ord of tekst) {
+		if (ord in ordteller) {
+			ordteller[ord] += 1
+		} else {
+			ordteller[ord] = 1
+		}
+	}
 
-    // Ord sortert i synkende rekkefølge
-    const listeAvListe = Object.entries(ordteller).sort((a, b) => b[1] - a[1])
+	// Ord sortert i synkende rekkefølge
+	const listeAvListe = Object.entries(ordteller).sort((a, b) => b[1] - a[1])
 
-    const mestBrukt = listeAvListe.slice(0, antallOrd)
+	const mestBrukt = listeAvListe.slice(0, antallOrd)
 
-    const mestBruktOrdliste = mestBrukt.map((ordpar) => {return ordpar[0]})
+	const mestBruktOrdliste = mestBrukt.map((ordpar) => {return ordpar[0]})
 
 	return mestBruktOrdliste
 }
@@ -272,18 +319,23 @@ async function main() {
 	const nyheterNrk = await hentNyheterNrk();
 	const nyheterAftenposten = await hentNyheterAftenposten();
 
-	const dagensOverskrifter = nyheterVg.concat(nyheterNrk).concat(nyheterAftenposten);
-	console.log("Dagens overskrifter.")
+	const urlListe = nyheterVg.concat(nyheterNrk).concat(nyheterAftenposten);
 
-	for (let nyhet of dagensOverskrifter) {
-		nyhet.tekst = await hentTekst(nyhet.lenke);
+	let relevantNytt = [];
+
+	for (let url of urlListe) {
+		const artikkel = await hentInfo(url);
+	}
+
+	// for (let nyhet of dagensOverskrifter) {
+	// 	nyhet.tekst = await hentTekst(nyhet.lenke);
 		
-		const matchendeStikkord = stikkord(stikkordliste, nyhet.tekst);
+	// 	const matchendeStikkord = stikkord(stikkordliste, nyhet.tekst);
 
-		if (matchendeStikkord.length > 0) {
-			console.log(nyhet.lenke);
-		}
-	};
+	// 	if (matchendeStikkord.length > 0) {
+	// 		console.log(nyhet.lenke);
+	// 	}
+	// };
 };
 
 main();
