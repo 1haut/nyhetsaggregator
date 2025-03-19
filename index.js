@@ -15,6 +15,9 @@ const aftenpostenHjemmeside = "https://www.aftenposten.no";
 const stoppord = sw.nob;
 const stoppordNynorsk = nno;
 
+// Initialiser tokeniserer 
+const tokenizer = new natural.AggressiveTokenizerNo();
+
 // Spør brukeren om emner den har lyst til å lese om
 async function emneValg() {
 	// Modul som tillater brukerinteraksjon
@@ -24,6 +27,7 @@ async function emneValg() {
 	});
 
 	const brukerSvar = await rl.question('Hvilke emner har du lyst til å lese om? Separer emnene med komma');
+
 	// Setter valgte emner i listeform(array)
 	const stikkord = brukerSvar.split(",").map((emne) => emne.trim());
 	rl.close();
@@ -34,6 +38,7 @@ async function emneValg() {
 
 async function nettsideHTML(url) {
 	try {
+		// Hent og returner nettsidestruktur
 		const html = await axios.get(url);
 		const htmlMarkup = cheerio.load(html);
 
@@ -44,8 +49,8 @@ async function nettsideHTML(url) {
 }
 
 async function hentNyheter() {
-    const websites = [vgHjemmeside, nrkHjemmeside, aftenpostenHjemmeside];
-    const selectors = [
+    const nettsider = [vgHjemmeside, nrkHjemmeside, aftenpostenHjemmeside];
+    const selektorer = [
         'article:not([hidden])', 
         '.kur-room:not([data-ec-id="https://radio.nrk.no/"])', 
         '.content-main-wrapper article'
@@ -53,16 +58,17 @@ async function hentNyheter() {
 
     const nyheter = [];
 
+	// For hver nyhetsside, hent url
     try {
-        for (let i = 0; i < websites.length; i++) {  
-            const website = websites[i];
-            const selector = selectors[i];
+        for (let i = 0; i < nettsider.length; i++) {  
+            const nettside = nettsider[i];
+            const selektor = selektorer[i];
     
             const $ = await nettsideHTML(website);
     
-            $(selector).each((index, element) => {
+            $(selektor).each((index, element) => {
                 const url = $(element).find('a').attr('href');
-                if (url && url.startsWith(website)) {
+                if (url && url.startsWith(nettside)) {
                     nyheter.push(url);
                 }
             })
@@ -173,8 +179,8 @@ function hentTekstNrk($) {
         const tekst = topptekst + total.join(" ") 
 
         return tekst
-        }
-    }
+	}
+}
 
 async function skrapAftenpostenArtikkel(nettlenke) {
 	try {
@@ -217,18 +223,16 @@ async function skrapAftenpostenArtikkel(nettlenke) {
 
 async function hentInfo(url) {
 	try {
-		const urlprefiks = "https://www.";
-
 		let informasjon;
 
 		switch (true) {
-			case url.startsWith(urlprefiks +  + "nrk.no"):
+			case url.startsWith(nrkHjemmeside):
 				informasjon = await skrapNrkArtikkel(url)
 				break;
-			case url.startsWith(urlprefiks + "vg.no"):
+			case url.startsWith(vgHjemmeside):
 				informasjon = await skrapVgArtikkel(url)
 				break;
-			case url.startsWith(urlprefiks + "aftenposten.no"):
+			case url.startsWith(aftenpostenHjemmeside):
 				informasjon = await skrapAftenpostenArtikkel(url)
 				break;
 		}
@@ -241,11 +245,12 @@ async function hentInfo(url) {
 };
 
 function stikkord(emner, fullTekst) {
-    const stikkordmatch = [];
-    const soekbarTekst = fullTekst.toLowerCase().replace(/[^a-zA-Z0-9\s]/g, '');
+	const ordliste = tokenizer.tokenize(fullTekst.toLowerCase());
+
+	const stikkordmatch = [];
     for (let ord of emner) {
-        ord = ord.toLowerCase()
-        if (soekbarTekst.includes(ord)) {
+        ord = ord.toLowerCase();
+        if (ordliste.includes(ord)) {
             stikkordmatch.push(ord);
         }
     }
@@ -254,7 +259,6 @@ function stikkord(emner, fullTekst) {
 }
 
 function fjernStoppord(tekst) {
-	const tokenizer = new natural.AggressiveTokenizerNo();
 	const ordliste = tokenizer.tokenize(tekst.toLowerCase());
 
 	const filtrerteOrd = sw.removeStopwords(ordliste, stoppord)
@@ -292,7 +296,7 @@ function nokkelord(tekst) {
 async function main() {
 	const brukerEmner = emneValg();
 
-	const urlListe = hentNyheter();
+	const urlListe = await hentNyheter();
 
 	let relevantNytt = [];
 
@@ -303,7 +307,7 @@ async function main() {
 			artikkel.emner = nokkelord(artikkel.tekst)
 		}
 
-		const matchendeStikkord = stikkord(brukerEmner, artikkel.tekst, artikkel.emner);
+		const matchendeStikkord = stikkord(brukerEmner, artikkel.tekst);
 
 		if (matchendeStikkord.length > 0) {
 			relevantNytt.push({
