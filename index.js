@@ -44,7 +44,7 @@ async function nettsideHTML(url) {
 }
 
 async function hentNyheter() {
-    const websites = ["https://www.vg.no", "https://www.nrk.no", "https://www.aftenposten.no"];
+    const websites = [vgHjemmeside, nrkHjemmeside, aftenpostenHjemmeside];
     const selectors = [
         'article:not([hidden])', 
         '.kur-room:not([data-ec-id="https://radio.nrk.no/"])', 
