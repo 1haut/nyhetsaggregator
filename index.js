@@ -43,59 +43,36 @@ async function nettsideHTML(url) {
 	}
 }
 
-async function hentNyheterVg() {
-	try {
-		const $ = await nettsideHTML(vgHjemmeside);
-		const nyheter = [];
-		// Henter url
-		$("article:not([hidden])").each((index, element) => {
-			const url = $(element).find('a').attr('href');
-			if (url && url.startsWith(vgHjemmeside)) {
-				nyheter.push(url)};
-				}
-            );
+async function hentNyheter() {
+    const websites = ["https://www.vg.no", "https://www.nrk.no", "https://www.aftenposten.no"];
+    const selectors = [
+        'article:not([hidden])', 
+        '.kur-room:not([data-ec-id="https://radio.nrk.no/"])', 
+        '.content-main-wrapper article'
+    ];
 
-		return nyheter		
-    } catch(err) {
-        console.error("Error fetching data: ", err);
+    const nyheter = [];
+
+    try {
+        for (let i = 0; i < websites.length; i++) {  
+            const website = websites[i];
+            const selector = selectors[i];
+    
+            const $ = await nettsideHTML(website);
+    
+            $(selector).each((index, element) => {
+                const url = $(element).find('a').attr('href');
+                if (url && url.startsWith(website)) {
+                    nyheter.push(url);
+                }
+            })
+        }
+    
+        return nyheter
+    } catch (err) {
+        console.error("Error fetching data: ", err)
     }
-};
-
-async function hentNyheterNrk() {
-	try {
-		const $ = await nettsideHTML(nrkHjemmeside);
-		const nyheter = [];
-		
-		// Henter url
-		$('.kur-room:not([data-ec-id="https://radio.nrk.no/"])').each((index, element) => {
-			const url = $(element).find('a').attr('href');
-			nyheter.push(url);
-			});
-
-		return nyheter
-	} catch (err) {
-		console.error("Error fetching data: ", err);
-	}
-};
-
-async function hentNyheterAftenposten() {
-	try {
-		const $ = await nettsideHTML(aftenpostenHjemmeside);
-		const nyheter = [];
-
-		// Henter url
-		$('.content-main-wrapper article').each((index, element) => {
-			const url = $(element).attr('data-pulse-url') || $(element).find('a').attr('href');
-			if (url && url.startsWith(aftenpostenHjemmeside)){
-				nyheter.push(url);
-			}		
-		});
-
-		return nyheter
-	} catch (err) {
-		console.error("Error fetching data: ", err);
-	}
-};
+}
 
 async function skrapVgArtikkel(nettlenke) {
 	try {
@@ -315,18 +292,18 @@ function nokkelord(tekst) {
 async function main() {
 	const brukerEmner = emneValg();
 
-	const nyheterVg = await hentNyheterVg();
-	const nyheterNrk = await hentNyheterNrk();
-	const nyheterAftenposten = await hentNyheterAftenposten();
-
-	const urlListe = nyheterVg.concat(nyheterNrk).concat(nyheterAftenposten);
+	const urlListe = hentNyheter();
 
 	let relevantNytt = [];
 
 	for (let url of urlListe) {
 		const artikkel = await hentInfo(url);
 
-		const matchendeStikkord = stikkord(brukerEmner, artikkel.tekst);
+		if (!artikkel.emner) {
+			artikkel.emner = nokkelord(artikkel.tekst)
+		}
+
+		const matchendeStikkord = stikkord(brukerEmner, artikkel.tekst, artikkel.emner);
 
 		if (matchendeStikkord.length > 0) {
 			relevantNytt.push({
