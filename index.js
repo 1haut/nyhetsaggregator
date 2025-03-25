@@ -276,6 +276,10 @@ function fjernStoppord(tekst) {
 	return filtrerteOrd
 }
 
+async function sov(sekunder){
+	await new Promise ((res) => setTimeout(res, sekunder * 1000));
+}
+
 function nokkelord(tekst) {
 	if (!Array.isArray(tekst)) {
 		tekst = fjernStoppord(tekst)
