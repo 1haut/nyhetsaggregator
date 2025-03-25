@@ -58,13 +58,13 @@ async function hentNyheter() {
 
     const nyheter = [];
 
-	// For hver nyhetsside, hent url
     try {
+		// For hver nyhetsside, hent url
         for (let i = 0; i < nettsider.length; i++) {  
             const nettside = nettsider[i];
             const selektor = selektorer[i];
     
-            const $ = await nettsideHTML(website);
+            const $ = await nettsideHTML(nettside);
     
             $(selektor).each((index, element) => {
                 const url = $(element).find('a').attr('href');
@@ -117,7 +117,7 @@ async function skrapVgArtikkel(nettlenke) {
 
 		informasjon.tekst = tekststykker.join(" ");
 		
-		return informasjon
+		return informasjon;
 	} catch (err) {
 		console.error(err);
 	}
@@ -146,7 +146,7 @@ async function skrapNrkArtikkel(nettlenke) {
                 value: 'content'
             }
         })
-
+		// NRK har heldigvis ikke betalingsmurer
         informasjon.betalingsmur = false;
 
         informasjon.tekst = hentTekstNrk($);
@@ -165,10 +165,15 @@ function hentTekstNrk($) {
 
         return tekst
     } else {
+		const total = [];
+
+		// Overskrift og ingress
         const topptekst = $('article header');
 
-        const total = [];
-        const artikkelelement = $("div[data-ec-name='brødtekst']").children('h2, p')
+		// Underoverskrifter og tekst
+        const artikkelelement = $("div[data-ec-name='brødtekst']").children('h2, p');
+
+		// 
         $(artikkelelement).find('span[aria-hidden="true"]').text("");
 
         artikkelelement.each((index, element) => {
@@ -227,13 +232,13 @@ async function hentInfo(url) {
 
 		switch (true) {
 			case url.startsWith(nrkHjemmeside):
-				informasjon = await skrapNrkArtikkel(url)
+				informasjon = await skrapNrkArtikkel(url);
 				break;
 			case url.startsWith(vgHjemmeside):
-				informasjon = await skrapVgArtikkel(url)
+				informasjon = await skrapVgArtikkel(url);
 				break;
 			case url.startsWith(aftenpostenHjemmeside):
-				informasjon = await skrapAftenpostenArtikkel(url)
+				informasjon = await skrapAftenpostenArtikkel(url);
 				break;
 		}
 
@@ -245,8 +250,10 @@ async function hentInfo(url) {
 };
 
 function stikkord(emner, fullTekst) {
+	// Tokeniser tekst
 	const ordliste = tokenizer.tokenize(fullTekst.toLowerCase());
 
+	//
 	const stikkordmatch = [];
     for (let ord of emner) {
         ord = ord.toLowerCase();
@@ -288,7 +295,7 @@ function nokkelord(tekst) {
 
 	const mestBrukt = listeAvListe.slice(0, antallOrd);
 
-	const mestBruktOrdliste = mestBrukt.map((ordpar) => {return ordpar[0]});
+	const mestBruktOrdliste = mestBrukt.map(ordpar => ordpar[0]);
 
 	return mestBruktOrdliste
 }
@@ -302,10 +309,6 @@ async function main() {
 
 	for (let url of urlListe) {
 		const artikkel = await hentInfo(url);
-
-		if (!artikkel.emner) {
-			artikkel.emner = nokkelord(artikkel.tekst)
-		}
 
 		const matchendeStikkord = stikkord(brukerEmner, artikkel.tekst);
 
