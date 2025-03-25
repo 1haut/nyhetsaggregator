@@ -15,6 +15,9 @@ const aftenpostenHjemmeside = "https://www.aftenposten.no";
 const stoppord = sw.nob;
 const stoppordNynorsk = nno;
 
+// 
+const cacheAdresse = "cache/resutat.json";
+
 // Initialiser tokeniserer 
 const tokenizer = new natural.AggressiveTokenizerNo();
 
@@ -48,7 +51,7 @@ async function nettsideHTML(url) {
 	}
 }
 
-async function hentNyheter() {
+async function hentUrler() {
     const nettsider = [vgHjemmeside, nrkHjemmeside, aftenpostenHjemmeside];
     const selektorer = [
         'article:not([hidden])', 
@@ -300,10 +303,33 @@ function nokkelord(tekst) {
 	return mestBruktOrdliste
 }
 
-async function main() {
-	const brukerEmner = emneValg();
+function lesCache(){
+	try {
+		const JSONinnhold = fs.readFileSync(dirPath, "utf-8");
 
-	const urlListe = await hentNyheter();
+		const objekt = JSON.parse(JSONinnhold);
+
+		const mappe = new Map(Object.entries(objekt));
+		
+		return mappe
+	} catch (error) {
+		return new Map()
+	}
+}
+
+function oppdaterCache(cache) {
+	fs.mkdir('ekstra', { recursive: true }, (err) => {
+		if (err) throw err;
+	});
+
+	fs.writeFileSync(dirPath, JSON.stringify(Object.fromEntries(cache)), {flag: "w+"});
+}
+
+
+async function output() {
+	const brukerEmner = await emneValg();
+
+	const urlListe = await hentUrler();
 
 	let relevantNytt = [];
 
@@ -322,4 +348,24 @@ async function main() {
 	}
 };
 
-main();
+function toCache(sokeord, ttl = 1 * 60 * 60 * 1000){
+    const cache = readCache();
+
+    const tid = Date.now();
+
+    const nokkel = sokeord.join(",");
+
+    if (cache.has(nokkel)) {
+        const { tidsmerke } = cache.get(nokkel);
+        if (tid - tidsmerke < ttl){
+            console.log("Fetching from cache");
+            return cache;
+        }
+    }
+    console.log("Grabbing result")
+    cache.clear();
+    const resultat = output();
+    cache.set(nokkel, {tidsmerke: tid, emner: sokeord, innhold: resultat})
+
+    oppdaterCache(cache)
+};
