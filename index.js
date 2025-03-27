@@ -31,7 +31,7 @@ async function emneValg() {
 
 	const brukerSvar = await rl.question('Hvilke emner har du lyst til å lese om? Separer emnene med komma');
 
-	// Setter valgte emner i listeform(array)
+	// Setter valgte emner i listeform
 	const stikkord = brukerSvar.split(",").map((emne) => emne.trim());
 	rl.close();
 
@@ -87,6 +87,7 @@ async function skrapVgArtikkel(nettlenke) {
 	try {
 		const $ = await nettsideHTML(nettlenke);
 
+		// Hent ut informasjon om artikkelen
 		const informasjon = $.extract({
             nyhetsside: {
                 selector: 'meta[property="og:site_name"]',
@@ -210,7 +211,7 @@ async function skrapAftenpostenArtikkel(nettlenke) {
             },
             journalist: ['article span.byline-name'],
         });
-
+		// Sjekk om paywall-klassen har innhold
         informasjon.betalingsmur = Boolean($('.paywall').text().trim(""));
 
         // Hent ut tekst
@@ -256,7 +257,7 @@ function stikkord(emner, fullTekst) {
 	// Tokeniser tekst
 	const ordliste = tokenizer.tokenize(fullTekst.toLowerCase());
 
-	//
+	// Lager en liste over 
 	const stikkordmatch = [];
     for (let ord of emner) {
         ord = ord.toLowerCase();
@@ -310,23 +311,25 @@ function nokkelord(tekst) {
 function lesCache(){
 	try {
 		const JSONinnhold = fs.readFileSync(dirPath, "utf-8");
-
+		// Konverter fra JSON til objekt
 		const objekt = JSON.parse(JSONinnhold);
-
+		// Konverter fra objekt til mappe
 		const mappe = new Map(Object.entries(objekt));
 		
 		return mappe
 	} catch (error) {
+		// Returner tom mappe
 		return new Map()
 	}
 }
 
 function oppdaterCache(cache) {
-	fs.mkdir('ekstra', { recursive: true }, (err) => {
+	// Søker rekursivt om cache-mappen eksistere, hvis ikke lag ny mappe
+	fs.mkdir('cache', { recursive: true }, (err) => {
 		if (err) throw err;
 	});
 
-	fs.writeFileSync(dirPath, JSON.stringify(Object.fromEntries(cache)), {flag: "w+"});
+	fs.writeFileSync(cacheAdresse, JSON.stringify(Object.fromEntries(cache)), {flag: "w+"});
 }
 
 
@@ -352,8 +355,8 @@ async function output() {
 	}
 };
 
-function toCache(sokeord, ttl = 1 * 60 * 60 * 1000){
-    const cache = readCache();
+async function toCache(sokeord, ttl = 1 * 60 * 60 * 1000){
+    const cache = lesCache();
 
     const tid = Date.now();
 
@@ -368,8 +371,10 @@ function toCache(sokeord, ttl = 1 * 60 * 60 * 1000){
     }
     console.log("Grabbing result")
     cache.clear();
-    const resultat = output();
+    const resultat = await output();
     cache.set(nokkel, {tidsmerke: tid, emner: sokeord, innhold: resultat})
 
-    oppdaterCache(cache)
+    oppdaterCache(cache);
 };
+
+// toCache();
