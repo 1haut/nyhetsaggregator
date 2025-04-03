@@ -318,7 +318,7 @@ function lesCache(){
 		
 		return mappe
 	} catch (error) {
-		// Returner tom mappe
+		// Tom mappe
 		return new Map()
 	}
 }

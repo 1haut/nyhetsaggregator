@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siste Nyheter</title>
+    <link href="style.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&display=swap" rel="stylesheet">
+    <script defer src="render.js"></script>
+</head>
+<body>
+    <main id="main" class="main">
+        <h1></h1>
+        <div class="container" >
+            <div class="item top left box1">
+                <form id="form1">
+                    <input type="text" id="words" name="words" placeholder="....."><br>
+                </form>
+                <ul class="keywords">
+                    <li class="term">Term 1</li>
+                    <li class="term">Term 2</li>
+                    <li class="term">Term 3</li>
+                </ul>
+            </div>
+            <div class="item top right box2">
+                <button type="submit" form="form1" value="Submit" id="getnews">Click!</button>
+            </div>
+            <ul class="item bottom left box3">
+                <li class="result-container">
+                    <div class="result-top">
+                        <div class="text">(NYT) The revolving restaurant is back again (and again)</div>
+                    </div>
+                    <div class="result-bottom">
+                        <div class="keyword">word1, word2</div>
+                        <div class="time-since">some time ago</div>
+                    </div>
+                </li>
+                
+            </ul>
+            <div class="item bottom right box4"></div>
+        </div>
+    </main>
+    <script
+    src="https://code.jquery.com/jquery-3.7.1.js"
+    integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+    crossorigin="anonymous"></script>
+</body>
+
+</html>
