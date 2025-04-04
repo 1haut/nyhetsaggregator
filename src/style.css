@@ -1,8 +1,7 @@
 body {
     font-family: "Lexend Deca", sans-serif;
-    background-color: #E1E2E3;
+    background-color: #ffffff;
 }
-
 
 h1,
 h2,
@@ -16,60 +15,35 @@ ul {
     margin: 0;
 }
 
+h1 {
+    text-align: center;
+    margin: 0.5rem;
+    background-color: black;
+    background-image: linear-gradient(180deg, 
+                                    black, 
+                                    #8B8882);
+    background-size: 100%;
+    background-repeat: repeat;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent; 
+    -moz-background-clip: text;
+    -moz-text-fill-color: transparent;
+}
+
 
 .container{
-    display:flex;
+    display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
 }
-
-.item{
-    display: flex;
-    align-items: center;
-    border: 1px solid black;
-    background-color: #E8E9EA;
-}
-
-.box1 {
-    display: flex;
-    flex-direction: column;
-}
-
-form {
-    height: 50%;
-    width: 100%;
-}
-
-.keywords {
-    height: 45%;
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: flex-end;
-    gap: 5px   
-}
-
-.keywords li {
-    list-style-type: none;
-    border: 1px solid black;
-    border-radius: 10%;
-    font-size: 0.8em;
-}
-
-.box3 {
-    flex-direction: column;
-    overflow-y: scroll;
-}
-
 
 .bottom {
     height: 72vh;
 }
 
 .top {
-    height: 100px;
+    height: 20vh;
 }
 
 .left {
@@ -80,25 +54,58 @@ form {
     width: 20%;
 }
 
-input {
-    width: calc(100% - 2 * 5px);
-    height: 100%;
-    padding: 0;
-    margin: 0;
-    border: 5px solid #899499;
-    border-radius: 10%;
-    position: relative; 
+.item{
+    border: 1px solid black;
+    background-color: #fef9ee;
 }
 
+.box1 {
+    display: flex;
+    align-items: center;
+    justify-content: center;  
+}
+
+.box2, .box3, .box4 {
+    display: flex;
+    align-items: center;
+}
+
+.box3 {
+    flex-direction: column;
+    overflow-y: scroll;
+}
+
+#form1 {
+    width: 100%;
+}
+
+input#text {
+    width: calc(100% - 2rem);
+    border: none;
+    padding: 1rem;
+    border-radius: 1rem;
+    background: #fef9ee;
+    box-shadow: 10px 10px 40px #fae3af,
+           -10px -10px 40px #ffffff;
+    font-family: "Lexend Deca", sans-serif;
+   }
+
+
 button {
+    font-family: "Lexend Deca", sans-serif;
     width: 100%;
     height: 100%;
     border: none; 
-    border-radius: 5%;
-    background-color: #0a0906;
-    color: white;
+    border-radius: 10%;
+    background-color: white;
+    color: #8e5526;
     cursor: pointer;
     font-size: 5vw;
+    transition: 0.25s;
+}
+
+button:hover {
+    background-color: #b7b7b8;
 }
 
 .result-container{
@@ -106,19 +113,25 @@ button {
     justify-content: space-between;
     flex-direction: column;
     width: 95%;
-    height: 18vh;
+    height: 17vh;
     box-shadow: 0px 4px 20px rgba(100, 100, 100, 0.1);
     border-radius: 10px;
-    border:2px solid #3f3f3f;
+    border: 2px solid #9f7c5a;
     cursor: pointer;
+    margin-bottom: 1vh;
+}
+
+.box3 li {
+    transition: width 0.25s;
 }
 
 .box3 li:hover {
-    background-color: #9cc2cf;
+    background-color: #fceecf;
+    width: 97%;
 }
 
 .result-top {
-    color: #14274E;
+    color: #87694d;
     padding: 0.5rem;
     font-size: 0.9rem;
     font-weight: 600;
@@ -129,11 +142,11 @@ button {
     flex-direction: row;
     justify-content: space-between;
     padding: 0.5rem;
-    color: #3f3f3f;
+    color: #87694d;
     font-size: 0.3em;
 }
 
-.text {
+.headline {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
