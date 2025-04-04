@@ -95,9 +95,8 @@ button {
     height: 100%;
     border: none; 
     border-radius: 5%;
-    background-color: #0437F2;
+    background-color: #0a0906;
     color: white;
-    /* margin: 5px; */
     cursor: pointer;
     font-size: 5vw;
 }
