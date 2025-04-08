@@ -15,13 +15,21 @@ ul {
     margin: 0;
 }
 
+a {
+    height: 100%;
+}
+
+a:hover, a:visited, a:link, a:active {
+    text-decoration: none;
+}
+
 h1 {
     text-align: center;
     margin: 0.5rem;
     background-color: black;
-    background-image: linear-gradient(180deg, 
-                                    black, 
-                                    #8B8882);
+    background-image: linear-gradient(  180deg, 
+                                        black, 
+                                        #8B8882);
     background-size: 100%;
     background-repeat: repeat;
     -webkit-background-clip: text;
@@ -61,11 +69,12 @@ h1 {
 
 .box1 {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;  
 }
 
-.box2, .box3, .box4 {
+.box2, .box3 {
     display: flex;
     align-items: center;
 }
@@ -75,11 +84,45 @@ h1 {
     overflow-y: scroll;
 }
 
+.box3 a {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+}
+
+.topic-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.topic-container p {
+    font-size: 0.8em;
+    border: 2px solid #87694d;
+    border-radius: 5%;
+    color: #a47c59;
+    padding: 2px 4px;
+    margin-bottom: 3vh;
+    font-weight: 600;
+}
+
+@keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
 #form1 {
     width: 100%;
 }
 
-input#text {
+input {
     width: calc(100% - 2rem);
     border: none;
     padding: 1rem;
@@ -90,6 +133,9 @@ input#text {
     font-family: "Lexend Deca", sans-serif;
    }
 
+::-webkit-input-placeholder{
+    font-size: 0.7rem;
+}
 
 button {
     font-family: "Lexend Deca", sans-serif;
@@ -98,14 +144,14 @@ button {
     border: none; 
     border-radius: 10%;
     background-color: white;
-    color: #8e5526;
+    color: #87694d;
     cursor: pointer;
     font-size: 5vw;
     transition: 0.25s;
 }
 
 button:hover {
-    background-color: #b7b7b8;
+    background-color: #E9E4DF;
 }
 
 .result-container{

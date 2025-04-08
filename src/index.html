@@ -15,25 +15,33 @@
         <h1>News</h1>
         <div class="container">
             <div class="item top left box1">
-                <form id="form1">
-                        <input type="text" id="text" name="text" placeholder=".....">
+                <h3></h3>
+                <form id="form1" action="">
+                    <input type="text" id="search" name="search" placeholder="🔎 for topics, separate w/ comma">
                 </form>
             </div>
             <div class="item top right box2">
                 <button type="submit" form="form1" value="Submit" id="getnews">Click!</button>
             </div>
-            <ul class="item bottom left box3"><a href="https://www.nytimes.com/2025/04/01/dining/revolving-restaurant.html"></a>
+            <ul class="item bottom left box3">
                 <li class="result-container">
-                    <div class="result-top">
-                        <div class="headline">(NYT) The revolving restaurant is back again (and again)</div>
+                    <a href="https://www.nytimes.com/2025/04/01/dining/revolving-restaurant.html">
+                        <div class="result-top">
+                        <h4 class="headline"><span class="source">(NYT)</span> The revolving restaurant is back again (and again)</h4>
                     </div>
                     <div class="result-bottom">
                         <div class="keyword">word1, word2</div>
                         <div class="time-since">some time ago</div>
                     </div>
+                    </a>
                 </li>     
             </ul>
-            <div class="item bottom right box4"></div>
+            <div class="item bottom right box4">
+                <div class="topic-container">
+                    <!-- <p class="term">Restaurant</p>
+                    <p class="term">Food</p> -->
+                </div>
+            </div>
         </div>
     </main>
     <script
