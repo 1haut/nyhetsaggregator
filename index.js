@@ -2,7 +2,6 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const natural = require('natural');
 const fs = require('node:fs');
-const testResultat = require('./mekke-mappe/pseudooutput').outputData
 
 // Hjemmesider
 const vgHjemmeside = "https://www.vg.no";
@@ -269,7 +268,6 @@ function oppdaterCache(cache) {
 }
 
 async function main(sokeord) {
-    console.time("dbsave");
     const emner = sokeord.split(",").map(item => item.trim())
     const cache = lesCache();
     const nokkel = sokeord.replaceAll(' ', '');
@@ -302,10 +300,7 @@ async function main(sokeord) {
 	}
 
     cache.clear();
-    cache.set(nokkel, {tidsmerke: tid, innhold: testResultat()});
+    cache.set(nokkel, {tidsmerke: tid, innhold: relevantNytt});
     oppdaterCache(cache);
-    console.timeEnd("dbsave");
     return relevantNytt
 }
-
-main('oslo');
