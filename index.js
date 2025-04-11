@@ -1,49 +1,24 @@
-import axios from "axios";
-import * as cheerio from 'cheerio';
-import puppeteer from "puppeteer";
-import readline from 'node:readline/promises';
-import natural from 'natural';
-import * as sw from 'stopword';
-import { nno } from './ekstra/stoppordNynorsk.js'
+const axios = require('axios');
+const cheerio = require('cheerio');
+const natural = require('natural');
+const fs = require('node:fs');
+const testResultat = require('./mekke-mappe/pseudooutput').outputData
 
 // Hjemmesider
 const vgHjemmeside = "https://www.vg.no";
 const nrkHjemmeside = "https://www.nrk.no";
 const aftenpostenHjemmeside = "https://www.aftenposten.no";
 
-// Stoppordlister
-const stoppord = sw.nob;
-const stoppordNynorsk = nno;
-
-// 
-const cacheAdresse = "cache/resutat.json";
-
 // Initialiser tokeniserer 
 const tokenizer = new natural.AggressiveTokenizerNo();
 
-// Spør brukeren om emner den har lyst til å lese om
-async function emneValg() {
-	// Modul som tillater brukerinteraksjon
-	const rl = readline.createInterface({
-	input: process.stdin,
-	output: process.stdout,
-	});
-
-	const brukerSvar = await rl.question('Hvilke emner har du lyst til å lese om? Separer emnene med komma');
-
-	// Setter valgte emner i listeform
-	const stikkord = brukerSvar.split(",").map((emne) => emne.trim());
-	rl.close();
-
-	return stikkord
-};
-
+const cacheFilbane = "cache/resultat.json";
 
 async function nettsideHTML(url) {
 	try {
 		// Hent og returner nettsidestruktur
-		const html = await axios.get(url);
-		const htmlMarkup = cheerio.load(html);
+		const { data } = await axios.get(url);
+		const htmlMarkup = cheerio.load(data);
 
 		return htmlMarkup
 	} catch (err) {
@@ -128,10 +103,10 @@ async function skrapVgArtikkel(nettlenke) {
 };
 
 async function skrapNrkArtikkel(nettlenke) {
-	try {
+    try {
 		const $ = await nettsideHTML(nettlenke);
 
-		const informasjon = $.extract({
+        const informasjon = $.extract({
             nyhetsside: {
                 selector: 'meta[property="og:site_name"]',
                 value: 'content'
@@ -140,7 +115,7 @@ async function skrapNrkArtikkel(nettlenke) {
                 selector: 'meta[property="og:url"]',
                 value: 'content'
             },
-            overskrift: 'h2.bulletin-title',
+            overskrift: 'title',
             tidspunkt: {
                 selector: 'meta[property="article:published_time"]',
                 value: 'content'
@@ -150,16 +125,16 @@ async function skrapNrkArtikkel(nettlenke) {
                 value: 'content'
             }
         })
-		// NRK har heldigvis ikke betalingsmurer
+        // NRK har heldigvis ikke betalingsmurer
         informasjon.betalingsmur = false;
 
         informasjon.tekst = hentTekstNrk($);
 
-		return informasjon
-	} catch (err) {
-		console.error(err);
-	}
-}
+        return informasjon
+    } catch (err) {
+        console.error(err);
+    }
+};
 
 function hentTekstNrk($) {
     // Skille mellom nyhetsmeldinger og artikler
@@ -172,7 +147,7 @@ function hentTekstNrk($) {
 		const total = [];
 
 		// Overskrift og ingress
-        const topptekst = $('article header');
+        const topptekst = $('article header').text().replace(/\r?\n|\r/g, " ");
 
 		// Underoverskrifter og tekst
         const artikkelelement = $("div[data-ec-name='brødtekst']").children('h2, p');
@@ -181,11 +156,11 @@ function hentTekstNrk($) {
         $(artikkelelement).find('span[aria-hidden="true"]').text("");
 
         artikkelelement.each((index, element) => {
-            const avsnitt = $(element).text();
+            const avsnitt = $(element).text().trim();
             total.push(avsnitt);
         })
 
-        const tekst = topptekst + total.join(" ") 
+        const tekst = topptekst + total.join(" ")
 
         return tekst
 	}
@@ -269,48 +244,9 @@ function stikkord(emner, fullTekst) {
     return stikkordmatch
 }
 
-function fjernStoppord(tekst) {
-	const ordliste = tokenizer.tokenize(tekst.toLowerCase());
-
-	const filtrerteOrd = sw.removeStopwords(ordliste, stoppord)
-
-	return filtrerteOrd
-}
-
-async function sov(sekunder){
-	await new Promise ((res) => setTimeout(res, sekunder * 1000));
-}
-
-function nokkelord(tekst) {
-	if (!Array.isArray(tekst)) {
-		tekst = fjernStoppord(tekst)
-	}
-
-	const antallOrd = 5
-
-	const ordteller = {}
-
-	for (let ord of tekst) {
-		if (ord in ordteller) {
-			ordteller[ord] += 1
-		} else {
-			ordteller[ord] = 1
-		}
-	}
-
-	// Ord sortert i synkende rekkefølge
-	const listeAvListe = Object.entries(ordteller).sort((a, b) => b[1] - a[1]);
-
-	const mestBrukt = listeAvListe.slice(0, antallOrd);
-
-	const mestBruktOrdliste = mestBrukt.map(ordpar => ordpar[0]);
-
-	return mestBruktOrdliste
-}
-
 function lesCache(){
 	try {
-		const JSONinnhold = fs.readFileSync(dirPath, "utf-8");
+		const JSONinnhold = fs.readFileSync(cacheFilbane, "utf-8");
 		// Konverter fra JSON til objekt
 		const objekt = JSON.parse(JSONinnhold);
 		// Konverter fra objekt til mappe
@@ -329,52 +265,47 @@ function oppdaterCache(cache) {
 		if (err) throw err;
 	});
 
-	fs.writeFileSync(cacheAdresse, JSON.stringify(Object.fromEntries(cache)), {flag: "w+"});
+	fs.writeFileSync(cacheFilbane, JSON.stringify(Object.fromEntries(cache)), {flag: "w+"});
 }
 
+async function main(sokeord) {
+    console.time("dbsave");
+    const emner = sokeord.split(",").map(item => item.trim())
+    const cache = lesCache();
+    const nokkel = sokeord.replaceAll(' ', '');
+    const ttl = 1000 * 60 * 60 * 1; // en time
+    const tid = Date.now();
 
-async function output() {
-	const brukerEmner = await emneValg();
+    if (cache.has(nokkel)) {
+        const { tidsmerke } = cache.get(nokkel);
+        if (tid - tidsmerke < ttl){
+            return cache.innhold;
+        }
+    }
+    const urlListe = await hentUrler();
 
-	const urlListe = await hentUrler();
 
-	let relevantNytt = [];
-
-	for (let url of urlListe) {
+    const relevantNytt = [];
+    for (let url of urlListe) {
 		const artikkel = await hentInfo(url);
 
-		const matchendeStikkord = stikkord(brukerEmner, artikkel.tekst);
+		const matchendeStikkord = stikkord(emner, artikkel.tekst);
 
 		if (matchendeStikkord.length > 0) {
 			relevantNytt.push({
 				url: url,
 				overskrift: artikkel.overskrift,
-				stikkord: matchendeStikkord
+				stikkord: matchendeStikkord,
+                dato: artikkel.tidspunkt
 			})
 		}
 	}
-};
 
-async function toCache(sokeord, ttl = 1 * 60 * 60 * 1000){
-    const cache = lesCache();
-
-    const tid = Date.now();
-
-    const nokkel = sokeord.join(",");
-
-    if (cache.has(nokkel)) {
-        const { tidsmerke } = cache.get(nokkel);
-        if (tid - tidsmerke < ttl){
-            console.log("Fetching from cache");
-            return cache;
-        }
-    }
-    console.log("Grabbing result")
     cache.clear();
-    const resultat = await output();
-    cache.set(nokkel, {tidsmerke: tid, emner: sokeord, innhold: resultat})
-
+    cache.set(nokkel, {tidsmerke: tid, innhold: testResultat()});
     oppdaterCache(cache);
-};
+    console.timeEnd("dbsave");
+    return relevantNytt
+}
 
-// toCache();
+main('oslo');
