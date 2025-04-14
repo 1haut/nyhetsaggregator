@@ -282,7 +282,6 @@ async function main(sokeord) {
     }
     const urlListe = await hentUrler();
 
-
     const relevantNytt = [];
     for (let url of urlListe) {
 		const artikkel = await hentInfo(url);

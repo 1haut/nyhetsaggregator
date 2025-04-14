@@ -1,42 +1,53 @@
 $(document).ready(() => {
-    const articleList = articles.matchingArticles()
+    const articleList = articles.matchingArticles();
+    const mq = window.matchMedia("(max-width: 400px)");
+    const knapp = $('button#getnews');
 
-    for (let item of articleList) {
-        $('.box3').append(`
-            <li class="result-container">
-                <a href="${item.url}">
-                    <div class="result-top">
-                        <h4 class="headline">${item.headline}</h4>
-                    </div>
-                    <div class="result-bottom">
-                        <div class="keyword">${item.keywords.join(", ")}</div>
-                        <div class="time-since">${timeDisplay(item.date)}</div>
-                    </div>
-                </a>
-            </li>     
-            `)
-    }
-
-
+    $(mq).on("change", () => {
+        if (mq.matches) {
+            knapp.text("Klikk her for å søke!")
+        } else {
+            knapp.text("Klikk her!") 
+        }
+    })
 
     $('form').on('submit', e => {
         e.preventDefault()
         const resultInput = $('#search').val();
 
-        const keywords = resultInput.split(',');
+        const keywords = resultInput.split(',').map(item => item.trim());
 
         const kElement = $('.topic-container');
 
-    
+        // Validering av input
+        if (keywords.every(word => word === '' || word === null)){
+            return false
+        }
+
+        for (let item of articleList) {
+            $('.box3').append(`
+                <li class="result-container">
+                    <a href="${item.url}">
+                        <div class="result-top">
+                            <h4 class="headline">${item.headline}</h4>
+                        </div>
+                        <div class="result-bottom">
+                            <div class="keyword">${item.keywords.join(", ")}</div>
+                            <div class="time-since">${timeDisplay(item.date)}</div>
+                        </div>
+                    </a>
+                </li>     
+            `)
+        }
+
         for (let word of keywords){
-            if (word.trim().length > 0){
-                word = word.trim().charAt(0).toUpperCase() + word.trim().slice(1).toLowerCase()
+            if (word.length > 0){
+                word = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
                 kElement.append(`
                     <p class="term">${word}</p>
                 `)
             }
         }
-
 
         $('.topic-container p').css('animation', 'pulse 1s 3');
 
