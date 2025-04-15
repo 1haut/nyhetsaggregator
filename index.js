@@ -12,7 +12,7 @@ const aftenpostenHjemmeside = "https://www.aftenposten.no";
 const tokenizer = new natural.AggressiveTokenizerNo();
 
 const cacheResultatFilbane = "cache/resultat.json";
-const cacheArtikkelFilbane = "cache/filbane.json";
+const cacheArtikkelFilbane = "cache/artikler.json";
 
 // Caching
 const cache = lesCache(cacheResultatFilbane);
@@ -286,9 +286,11 @@ async function main(sokeord) {
             return cache.innhold;
         }
     }
-    const urlListe = [
-        "https://www.aftenposten.no/verden/nyhetsanalyse/i/rPJmPR/ingen-president-har-vaert-mer-tilgjengelig-for-pressen-enn-donald-trump-det-er-ikke-et-godt-tegn"
-    ]
+    // const urlListe = [
+    //     "https://www.aftenposten.no/verden/nyhetsanalyse/i/rPJmPR/ingen-president-har-vaert-mer-tilgjengelig-for-pressen-enn-donald-trump-det-er-ikke-et-godt-tegn", "https://www.nrk.no/nordland/hundeeiere-i-lofoten-fortviler_-far-ikke-fly-med-hund-i-sommer-1.17361384", "https://www.vg.no/sport/i/QMAvn8/luka-modric-blir-medeier-i-swansea"
+    // ]
+
+    const urlListe = await hentUrler();
 
     const relevantNytt = [];
     for (let url of urlListe) {
@@ -318,5 +320,12 @@ async function main(sokeord) {
     cache.set(nokkel, {tidsmerke: tid, innhold: relevantNytt});
     oppdaterCache(cache, cacheResultatFilbane);
     oppdaterCache(cacheArtikler, cacheArtikkelFilbane);
+
+    console.log(`Fra index.js: ${relevantNytt}`)
     return relevantNytt
+}
+
+
+module.exports = {
+    main
 }

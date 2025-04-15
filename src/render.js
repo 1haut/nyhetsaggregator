@@ -1,5 +1,5 @@
 $(document).ready(() => {
-    const articleList = articles.matchingArticles();
+    // const articleList = articles.matchingArticles();
     const mq = window.matchMedia("(max-width: 400px)");
     const knapp = $('button#getnews');
 
@@ -11,8 +11,9 @@ $(document).ready(() => {
         }
     })
 
-    $('form').on('submit', e => {
+    $('form').on('submit', async e => {
         e.preventDefault()
+        
         const resultInput = $('#search').val();
 
         const keywords = resultInput.split(',').map(item => item.trim());
@@ -22,37 +23,43 @@ $(document).ready(() => {
         // Validering av input
         if (keywords.every(word => word === '' || word === null)){
             return false
-        }
+        } else {
+            const articleList = await search.matchingArticles(resultInput);
+            console.log(articleList);
 
-        for (let item of articleList) {
-            $('.box3').append(`
-                <li class="result-container">
-                    <a href="${item.url}">
-                        <div class="result-top">
-                            <h4 class="headline">${item.headline}</h4>
-                        </div>
-                        <div class="result-bottom">
-                            <div class="keyword">${item.keywords.join(", ")}</div>
-                            <div class="time-since">${timeDisplay(item.date)}</div>
-                        </div>
-                    </a>
-                </li>     
-            `)
-        }
+            $('.result-container').remove();
+            $('.term').remove();
 
-        for (let word of keywords){
-            if (word.length > 0){
-                word = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                kElement.append(`
-                    <p class="term">${word}</p>
+            for (let item of articleList) {
+                $('.box3').append(`
+                    <li class="result-container">
+                        <a href="${item.url}">
+                            <div class="result-top">
+                                <h4 class="headline">${item.overskrift}</h4>
+                            </div>
+                            <div class="result-bottom">
+                                <div class="keyword">${item.stikkord.join(", ")}</div>
+                                <div class="time-since">${timeDisplay(item.dato)}</div>
+                            </div>
+                        </a>
+                    </li>     
                 `)
             }
-        }
-
-        $('.topic-container p').css('animation', 'pulse 1s 3');
-
-        setTimeout(() => {$('.topic-container p').css('animation', '')}, 3000)
-
+    
+            for (let word of keywords){
+                if (word.length > 0){
+                    word = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                    kElement.append(`
+                        <p class="term">${word}</p>
+                    `)
+                }
+            }
+    
+            $('.topic-container p').css('animation', 'pulse 1s 3');
+    
+            setTimeout(() => {$('.topic-container p').css('animation', '')}, 3000)
+    
+        }        
         // window.electron.sendInput(resultInput);
     })
 })
@@ -61,7 +68,7 @@ function timeDisplay(date){
     const oneDayMillisec = 1000 * 60 * 60 * 24
     const oneHourMillisec = 1000 * 60 * 60
     const oneMinuteMillisec = 1000 * 60
-    const timeAgoMs = Date.parse("2025-04-10T06:00:00Z") - Date.parse(date)
+    const timeAgoMs = Date.now() - Date.parse(date)
     let time
     switch (true) {
         case timeAgoMs > oneDayMillisec:
