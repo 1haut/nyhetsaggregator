@@ -12,18 +12,23 @@ const aftenpostenHjemmeside = "https://www.aftenposten.no";
 const tokenizer = new natural.AggressiveTokenizerNo();
 
 const cacheResultatFilbane = "cache/resultat.json";
-const cacheArtikkelFilbane = "cache/artikler.json";
+const cacheArtikkelFilbane = "cache/filbane.json";
+
+// Caching
+const cache = lesCache(cacheResultatFilbane);
+const cacheArtikler = lesCache(cacheArtikkelFilbane);
+
 
 async function nettsideHTML(url) {
-	try {
-		// Hent og returner nettsidestruktur
-		const { data } = await axios.get(url);
-		const htmlMarkup = cheerio.load(data);
+    try {
+        // Hent og returner nettsidestruktur
+        const { data } = await axios.get(url);
+        const htmlMarkup = cheerio.load(data);
 
-		return htmlMarkup
-	} catch (err) {
-		console.error(err);
-	}
+        return htmlMarkup
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 async function hentUrler() {
@@ -37,7 +42,7 @@ async function hentUrler() {
     const nyheter = [];
 
     try {
-		// For hver nyhetsside, hent url
+        // For hver nyhetsside, hent url
         for (let i = 0; i < nettsider.length; i++) {  
             const nettside = nettsider[i];
             const selektor = selektorer[i];
@@ -59,11 +64,11 @@ async function hentUrler() {
 }
 
 async function skrapVgArtikkel(nettlenke) {
-	try {
-		const $ = await nettsideHTML(nettlenke);
+    try {
+        const $ = await nettsideHTML(nettlenke);
 
-		// Hent ut informasjon om artikkelen
-		const informasjon = $.extract({
+        // Hent ut informasjon om artikkelen
+        const informasjon = $.extract({
             nyhetsside: {
                 selector: 'meta[property="og:site_name"]',
                 value: 'content'
@@ -84,27 +89,27 @@ async function skrapVgArtikkel(nettlenke) {
             }]
         })
 
-		const tekststykker = [];
-		// Elementer som inneholder overskrifter (h1), avsnitt (p) og underoverskrifter (h2)
-		const artikkelside = $('h1, .article-body > p, .article-body > h2');
-		
-		// Henter ut hvert ansnitt
-		artikkelside.each((index, element) => {
-			const ansnitt = $(element).text();
-			tekststykker.push(ansnitt);
-		});
+        const tekststykker = [];
+        // Elementer som inneholder overskrifter (h1), avsnitt (p) og underoverskrifter (h2)
+        const artikkelside = $('h1, .article-body > p, .article-body > h2');
+        
+        // Henter ut hvert ansnitt
+        artikkelside.each((index, element) => {
+            const ansnitt = $(element).text();
+            tekststykker.push(ansnitt);
+        });
 
-		informasjon.tekst = tekststykker.join(" ");
-		
-		return informasjon;
-	} catch (err) {
-		console.error(err);
-	}
+        informasjon.tekst = tekststykker.join(" ");
+        
+        return informasjon;
+    } catch (err) {
+        console.error(err);
+    }
 };
 
 async function skrapNrkArtikkel(nettlenke) {
     try {
-		const $ = await nettsideHTML(nettlenke);
+        const $ = await nettsideHTML(nettlenke);
 
         const informasjon = $.extract({
             nyhetsside: {
@@ -144,15 +149,15 @@ function hentTekstNrk($) {
 
         return tekst
     } else {
-		const total = [];
+        const total = [];
 
-		// Overskrift og ingress
+        // Overskrift og ingress
         const topptekst = $('article header').text().replace(/\r?\n|\r/g, " ");
 
-		// Underoverskrifter og tekst
+        // Underoverskrifter og tekst
         const artikkelelement = $("div[data-ec-name='brødtekst']").children('h2, p');
 
-		// 
+        // 
         $(artikkelelement).find('span[aria-hidden="true"]').text("");
 
         artikkelelement.each((index, element) => {
@@ -163,14 +168,14 @@ function hentTekstNrk($) {
         const tekst = topptekst + total.join(" ")
 
         return tekst
-	}
+    }
 }
 
 async function skrapAftenpostenArtikkel(nettlenke) {
-	try {
-		const $ = await nettsideHTML(nettlenke);
+    try {
+        const $ = await nettsideHTML(nettlenke);
 
-		const informasjon = $.extract({
+        const informasjon = $.extract({
             nyhetsside: {
                 selector: 'meta[name="application-name"]',
                 value: 'content'
@@ -186,54 +191,55 @@ async function skrapAftenpostenArtikkel(nettlenke) {
             },
             journalist: ['article span.byline-name'],
         });
-		// Sjekk om paywall-klassen har innhold
+        // Sjekk om paywall-klassen har innhold
         informasjon.betalingsmur = Boolean($('.paywall').text().trim(""));
 
         // Hent ut tekst
         const total = [];
 
-		$('article').children("h1, h2, p, ul").each((index, element) => {
-			const avsnitt = $(element).text();
-			total.push(avsnitt);
-		});
+        $('article').children("h1, h2, p, ul").each((index, element) => {
+            const avsnitt = $(element).text();
+            total.push(avsnitt);
+        });
 
-		informasjon.tekst = total.join(" ");
+        informasjon.tekst = total.join(" ");
 
         return informasjon;
-	} catch (err) {
-		console.error(err);
-	}
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 async function hentInfo(url) {
-	try {
-		let informasjon;
+    try {
+        let informasjon;
 
-		switch (true) {
-			case url.startsWith(nrkHjemmeside):
-				informasjon = await skrapNrkArtikkel(url);
-				break;
-			case url.startsWith(vgHjemmeside):
-				informasjon = await skrapVgArtikkel(url);
-				break;
-			case url.startsWith(aftenpostenHjemmeside):
-				informasjon = await skrapAftenpostenArtikkel(url);
-				break;
-		}
+        switch (true) {
+            case url.startsWith(nrkHjemmeside):
+                informasjon = await skrapNrkArtikkel(url);
+                break;
+            case url.startsWith(vgHjemmeside):
+                informasjon = await skrapVgArtikkel(url);
+                break;
+            case url.startsWith(aftenpostenHjemmeside):
+                informasjon = await skrapAftenpostenArtikkel(url);
+                break;
+        }
 
-		return informasjon
-	} catch (err) {
-		console.log(`Url som feilet: ${url}`);
-		console.error(err);
-	}
+        return informasjon
+    } catch (err) {
+        oppdaterCache(cacheArtikler, cacheArtikkelFilbane);
+        console.log(`Url som feilet: ${url}`);
+        console.error(err);
+    }
 };
 
 function stikkord(emner, fullTekst) {
-	// Tokeniser tekst
-	const ordliste = tokenizer.tokenize(fullTekst.toLowerCase());
+    // Tokeniser tekst
+    const ordliste = tokenizer.tokenize(fullTekst.toLowerCase());
 
-	// Lager en liste over 
-	const stikkordmatch = [];
+    // Lager en liste over 
+    const stikkordmatch = [];
     for (let ord of emner) {
         ord = ord.toLowerCase();
         if (ordliste.includes(ord)) {
@@ -245,33 +251,31 @@ function stikkord(emner, fullTekst) {
 }
 
 function lesCache(filbane){
-	try {
-		const JSONinnhold = fs.readFileSync(filbane, "utf-8");
-		// Konverter fra JSON til objekt
-		const objekt = JSON.parse(JSONinnhold);
-		// Konverter fra objekt til mappe
-		const mappe = new Map(Object.entries(objekt));
-		
-		return mappe
-	} catch (error) {
-		// Tom mappe
-		return new Map()
-	}
+    try {
+        const JSONinnhold = fs.readFileSync(filbane, "utf-8");
+        // Konverter fra JSON til objekt
+        const objekt = JSON.parse(JSONinnhold);
+        // Konverter fra objekt til mappe
+        const mappe = new Map(Object.entries(objekt));
+        
+        return mappe
+    } catch (error) {
+        // Tom mappe
+        return new Map()
+    }
 }
 
 function oppdaterCache(cache, filbane) {
-	// Søker rekursivt om cache-mappen eksistere, hvis ikke lag ny mappe
-	fs.mkdir('cache', { recursive: true }, (err) => {
-		if (err) throw err;
-	});
+    // Søker rekursivt om cache-mappen eksistere, hvis ikke lag ny mappe
+    fs.mkdir('cache', { recursive: true }, (err) => {
+        if (err) throw err;
+    });
 
-	fs.writeFileSync(filbane, JSON.stringify(Object.fromEntries(cache)), {flag: "w+"});
+    fs.writeFileSync(filbane, JSON.stringify(Object.fromEntries(cache)), {flag: "w+"});
 }
 
 async function main(sokeord) {
     const emner = sokeord.split(",").map(item => item.trim())
-    const cache = lesCache(cacheResultatFilbane);
-    const cacheArtikler = lesCache(cacheArtikkelFilbane);
     const nokkel = sokeord.replaceAll(' ', '');
     const ttl = 1000 * 60 * 60 * 1; // en time
     const tid = Date.now();
@@ -282,32 +286,37 @@ async function main(sokeord) {
             return cache.innhold;
         }
     }
-    const urlListe = await hentUrler();
+    const urlListe = [
+        "https://www.aftenposten.no/verden/nyhetsanalyse/i/rPJmPR/ingen-president-har-vaert-mer-tilgjengelig-for-pressen-enn-donald-trump-det-er-ikke-et-godt-tegn"
+    ]
 
     const relevantNytt = [];
     for (let url of urlListe) {
         let artikkel;
         if (cacheArtikler.has(url)) {
-            artikkel = cacheArtikler.get(url)
+            console.log("Ja")
+            artikkel = cacheArtikler.get(url);
         } else {
+            console.log("Nei")
             artikkel = await hentInfo(url);
             cacheArtikler.set(url, artikkel);
         }
 
-		const matchendeStikkord = stikkord(emner, artikkel.tekst);
+        const matchendeStikkord = stikkord(emner, artikkel.tekst);
 
-		if (matchendeStikkord.length > 0) {
-			relevantNytt.push({
-				url: url,
-				overskrift: artikkel.overskrift,
-				stikkord: matchendeStikkord,
+        if (matchendeStikkord.length > 0) {
+            relevantNytt.push({
+                url: url,
+                overskrift: artikkel.overskrift,
+                stikkord: matchendeStikkord,
                 dato: artikkel.tidspunkt
-			})
-		}
-	}
+            })
+        }
+    }
 
     cache.clear();
     cache.set(nokkel, {tidsmerke: tid, innhold: relevantNytt});
     oppdaterCache(cache, cacheResultatFilbane);
+    oppdaterCache(cacheArtikler, cacheArtikkelFilbane);
     return relevantNytt
 }
