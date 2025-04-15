@@ -11,7 +11,8 @@ const aftenpostenHjemmeside = "https://www.aftenposten.no";
 // Initialiser tokeniserer 
 const tokenizer = new natural.AggressiveTokenizerNo();
 
-const cacheFilbane = "cache/resultat.json";
+const cacheResultatFilbane = "cache/resultat.json";
+const cacheArtikkelFilbane = "cache/artikler.json";
 
 async function nettsideHTML(url) {
 	try {
@@ -46,7 +47,7 @@ async function hentUrler() {
             $(selektor).each((index, element) => {
                 const url = $(element).find('a').attr('href');
                 if (url && url.startsWith(nettside)) {
-                    nyheter.push(url);
+                    nyheter.push(url.split("?")[0]);
                 }
             })
         }
@@ -243,9 +244,9 @@ function stikkord(emner, fullTekst) {
     return stikkordmatch
 }
 
-function lesCache(){
+function lesCache(filbane){
 	try {
-		const JSONinnhold = fs.readFileSync(cacheFilbane, "utf-8");
+		const JSONinnhold = fs.readFileSync(filbane, "utf-8");
 		// Konverter fra JSON til objekt
 		const objekt = JSON.parse(JSONinnhold);
 		// Konverter fra objekt til mappe
@@ -258,18 +259,19 @@ function lesCache(){
 	}
 }
 
-function oppdaterCache(cache) {
+function oppdaterCache(cache, filbane) {
 	// Søker rekursivt om cache-mappen eksistere, hvis ikke lag ny mappe
 	fs.mkdir('cache', { recursive: true }, (err) => {
 		if (err) throw err;
 	});
 
-	fs.writeFileSync(cacheFilbane, JSON.stringify(Object.fromEntries(cache)), {flag: "w+"});
+	fs.writeFileSync(filbane, JSON.stringify(Object.fromEntries(cache)), {flag: "w+"});
 }
 
 async function main(sokeord) {
     const emner = sokeord.split(",").map(item => item.trim())
-    const cache = lesCache();
+    const cache = lesCache(cacheResultatFilbane);
+    const cacheArtikler = lesCache(cacheArtikkelFilbane);
     const nokkel = sokeord.replaceAll(' ', '');
     const ttl = 1000 * 60 * 60 * 1; // en time
     const tid = Date.now();
@@ -284,7 +286,13 @@ async function main(sokeord) {
 
     const relevantNytt = [];
     for (let url of urlListe) {
-		const artikkel = await hentInfo(url);
+        let artikkel;
+        if (cacheArtikler.has(url)) {
+            artikkel = cacheArtikler.get(url)
+        } else {
+            artikkel = await hentInfo(url);
+            cacheArtikler.set(url, artikkel);
+        }
 
 		const matchendeStikkord = stikkord(emner, artikkel.tekst);
 
@@ -300,6 +308,6 @@ async function main(sokeord) {
 
     cache.clear();
     cache.set(nokkel, {tidsmerke: tid, innhold: relevantNytt});
-    oppdaterCache(cache);
+    oppdaterCache(cache, cacheResultatFilbane);
     return relevantNytt
 }
