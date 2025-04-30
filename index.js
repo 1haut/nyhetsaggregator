@@ -18,6 +18,8 @@ const cacheArtikkelFilbane = "cache/artikler.json";
 const cache = lesCache(cacheResultatFilbane);
 const cacheArtikler = lesCache(cacheArtikkelFilbane);
 
+const cachingKapasitet = 1000;
+
 
 async function nettsideHTML(url) {
     try {
@@ -286,9 +288,6 @@ async function main(sokeord) {
             return cache.innhold;
         }
     }
-    // const urlListe = [
-    //     "https://www.aftenposten.no/verden/nyhetsanalyse/i/rPJmPR/ingen-president-har-vaert-mer-tilgjengelig-for-pressen-enn-donald-trump-det-er-ikke-et-godt-tegn", "https://www.nrk.no/nordland/hundeeiere-i-lofoten-fortviler_-far-ikke-fly-med-hund-i-sommer-1.17361384", "https://www.vg.no/sport/i/QMAvn8/luka-modric-blir-medeier-i-swansea"
-    // ]
 
     const urlListe = await hentUrler();
 
@@ -296,10 +295,12 @@ async function main(sokeord) {
     for (let url of urlListe) {
         let artikkel;
         if (cacheArtikler.has(url)) {
-            console.log("Ja")
             artikkel = cacheArtikler.get(url);
         } else {
-            console.log("Nei")
+            if (cachingKapasitet >= cacheArtikler.size) {
+                const forsteArtikkelNokkel = cacheArtikler.keys().next().value;
+                cacheArtikler.delete(forsteArtikkelNokkel);
+            }
             artikkel = await hentInfo(url);
             cacheArtikler.set(url, artikkel);
         }
@@ -321,7 +322,6 @@ async function main(sokeord) {
     oppdaterCache(cache, cacheResultatFilbane);
     oppdaterCache(cacheArtikler, cacheArtikkelFilbane);
 
-    console.log(`Fra index.js: ${relevantNytt}`)
     return relevantNytt
 }
 

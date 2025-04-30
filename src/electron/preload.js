@@ -1,5 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron/renderer')
-const { main } = require('../../newScript')
+const { main } = require('../../mekke-mappe/pseudooutput.js')
 
 contextBridge.exposeInMainWorld('value', {
   sendInput: (text) => ipcRenderer.send('submit-input', text),

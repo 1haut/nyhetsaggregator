@@ -22,7 +22,7 @@ $(document).ready(() => {
 
         // Validering av input
         if (keywords.every(word => word === '' || word === null)){
-            return false
+            $("ul.box3").text("No articles found, try again please.")
         } else {
             const articleList = await search.matchingArticles(resultInput);
             console.log(articleList);
